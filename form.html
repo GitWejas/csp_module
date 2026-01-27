@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Title Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    input { width: 320px; padding: 8px; font-size: 16px; }
+    #matchesCount { margin-top: 10px; color: #000; font-size: 14px; }
+    #suggestionsBox {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      width: 336px; /* Same as input width + padding */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .suggestion-item {
+      padding: 8px;
+      cursor: pointer;
+    }
+    .suggestion-item:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>CSP - Module pour trouver les professions</h2>
+  <div id="matchesCount"></div>
+  <div style="position: relative;">
+    <input
+      type="text"
+      id="searchBox"
+      placeholder="Entrez votre profession ici..."
+      autocomplete="off"
+    >
+    <div id="suggestionsBox"></div>
+  </div>
+  
+  
+
+  <script>
+    function normalizeText(str) {
+      if (!str) return '';
+      return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    }
+
+    let data = [];
+
+    fetch("prof.json")
+      .then(response => response.json())
+      .then(d => {
+        console.log("Data loaded, first item:", d[0]);
+        
+        // Transform data
+        data = d.map(item => {
+          const normalized = item.names_normalised || item.name_normalised || item.normalised || "";
+          const name = item.names || item.name || item.search_name || "";
+          
+          return {
+            search: normalized || normalizeText(name),
+            display: name
+          };
+        });
+        
+        console.log("Total items:", data.length);
+      })
+      .catch(error => {
+        console.error("Error loading data:", error);
+        document.getElementById("matchesCount").textContent = "Error loading data";
+      });
+
+    const searchBox = document.getElementById("searchBox");
+    const suggestionsBox = document.getElementById("suggestionsBox");
+    const matchesCount = document.getElementById("matchesCount");
+
+    function showSuggestions(matches) {
+      suggestionsBox.innerHTML = "";
+      
+      if (matches.length === 0) {
+        suggestionsBox.style.display = "none";
+        return;
+      }
+      
+      matches.slice(0, 15).forEach(item => {
+        const div = document.createElement("div");
+        div.className = "suggestion-item";
+        div.textContent = item.display;
+        div.addEventListener("click", () => {
+          searchBox.value = item.display;
+          suggestionsBox.style.display = "none";
+          matchesCount.textContent = `Selectionné : "${item.display}"`;
+        });
+        suggestionsBox.appendChild(div);
+      });
+      
+      suggestionsBox.style.display = "block";
+    }
+
+    function search() {
+      const query = searchBox.value.trim();
+      
+      if (query.length < 2 || data.length === 0) {
+        suggestionsBox.style.display = "none";
+        matchesCount.textContent = query.length > 0 ? "Entrez au minimum deux caractères" : "";
+        return;
+      }
+      
+      const normalizedQuery = normalizeText(query);
+      
+      // SIMPLE substring search
+      const matches = data.filter(item => 
+        item.search.includes(normalizedQuery)
+      );
+      
+      showSuggestions(matches);
+      matchesCount.textContent = `${matches.length} profession(s) trouvée(s)`;
+    }
+
+    // Search on input
+    searchBox.addEventListener("input", search);
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!searchBox.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = "none";
+      }
+    });
+    
+    // Handle keyboard navigation
+    searchBox.addEventListener("keydown", (e) => {
+      const items = suggestionsBox.querySelectorAll(".suggestion-item");
+      const currentFocus = document.querySelector(".suggestion-item.active");
+      let index = Array.from(items).indexOf(currentFocus);
+      
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (items.length > 0) {
+          if (currentFocus) currentFocus.classList.remove("active");
+          index = (index + 1) % items.length;
+          items[index].classList.add("active");
+          items[index].scrollIntoView({ block: "nearest" });
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (items.length > 0) {
+          if (currentFocus) currentFocus.classList.remove("active");
+          index = index <= 0 ? items.length - 1 : index - 1;
+          items[index].classList.add("active");
+          items[index].scrollIntoView({ block: "nearest" });
+        }
+      } else if (e.key === "Enter" && currentFocus) {
+        e.preventDefault();
+        searchBox.value = currentFocus.textContent;
+        suggestionsBox.style.display = "none";
+        matchesCount.textContent = `Sélectionné : "${currentFocus.textContent}"`;
+      } else if (e.key === "Escape") {
+        suggestionsBox.style.display = "none";
+      }
+    });
+    
+    // Add hover effect for suggestions
+    suggestionsBox.addEventListener("mouseover", (e) => {
+      if (e.target.classList.contains("suggestion-item")) {
+        const items = suggestionsBox.querySelectorAll(".suggestion-item");
+        items.forEach(item => item.classList.remove("active"));
+        e.target.classList.add("active");
+      }
+    });
+
+    // Auto-test after data loads
+    setTimeout(() => {
+      if (data.length > 0) {
+        console.log("Testing with 'enge'...");
+        searchBox.value = "enge";
+        search();
+        
+        setTimeout(() => {
+          console.log("Testing with 'engé'...");
+          searchBox.value = "engé";
+          search();
+        }, 1000);
+      }
+    }, 2000);
+  </script>
+
+</body>
+</html>
