@@ -45,7 +45,88 @@
   
 
   <script>
-    function normalizeText(str) {
+     const FRENCH_SHORT_WORDS = [
+      // Articles
+      'un', 'une', 'le', 'la', 'les', 'l', 'des', 'du', 'de', 'd',
+      // Prepositions
+      'à', 'au', 'aux', 'avec', 'chez', 'dans', 'de', 'depuis', 'derrière',
+      'devant', 'en', 'entre', 'par', 'parmi', 'pendant', 'pour', 'sans',
+      'sous', 'sur', 'vers',
+      // Conjunctions
+      'et', 'ou', 'où', 'que', 'qui', 'quoi', 'dont', 'car', 'donc',
+      'or', 'ni', 'mais', 'si', 'comme', 'lorsque', 'puisque', 'quand',
+      // Other common short words
+      'ce', 'cet', 'cette', 'ces', 'mon', 'ton', 'son', 'notre', 'votre',
+      'leur', 'mes', 'tes', 'ses', 'nos', 'vos', 'leurs', 'je', 'tu', 'il',
+      'elle', 'nous', 'vous', 'ils', 'elles', 'me', 'te', 'se', 'y', 'en',
+      'ne', 'pas', 'plus', 'moins', 'très', 'tout', 'toute', 'tous', 'toutes'
+    ];
+
+       function normalizeText(str) {
+      if (!str) return '';
+      
+      // Step 1: Remove accents and convert to lowercase
+      let normalized = str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+      
+      // Step 2: Remove special characters, keep only letters and spaces
+      normalized = normalized.replace(/[^a-z\s]/g, ' ');
+      
+      // Step 3: Split into words
+      const words = normalized.split(/\s+/).filter(word => word.length > 0);
+      
+      // Step 4: Filter out short French words (less than 3 letters OR in stopword list)
+      const filteredWords = words.filter(word => {
+        // Keep words with 4 or more letters
+        if (word.length >= 4) return true;
+        
+        // Keep words with 3 letters that are NOT in the stopword list
+        if (word.length === 3 && !FRENCH_SHORT_WORDS.includes(word)) return true;
+        
+        // Remove words with 1-2 letters OR words in stopword list
+        return false;
+      });
+      
+      // Step 5: Join back with single spaces
+      return filteredWords.join(' ').trim();
+    }
+
+    // Alternative: Simple normalization (just for comparison)
+       function normalizeText(str) {
+      if (!str) return '';
+      
+      // Step 1: Remove accents and convert to lowercase
+      let normalized = str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+      
+      // Step 2: Remove special characters, keep only letters and spaces
+      normalized = normalized.replace(/[^a-z\s]/g, ' ');
+      
+      // Step 3: Split into words
+      const words = normalized.split(/\s+/).filter(word => word.length > 0);
+      
+      // Step 4: Filter out short French words (less than 3 letters OR in stopword list)
+      const filteredWords = words.filter(word => {
+        // Keep words with 4 or more letters
+        if (word.length >= 4) return true;
+        
+        // Keep words with 3 letters that are NOT in the stopword list
+        if (word.length === 3 && !FRENCH_SHORT_WORDS.includes(word)) return true;
+        
+        // Remove words with 1-2 letters OR words in stopword list
+        return false;
+      });
+      
+      // Step 5: Join back with single spaces
+      return filteredWords.join(' ').trim();
+    }
+
+    // Alternative: Simple normalization (just for comparison)
+    function simpleNormalizeText(str) {
       if (!str) return '';
       return str
         .normalize("NFD")
