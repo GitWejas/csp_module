@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Job Title Search</title>
+  <title>Formulaire des professions CH-ISCO-19</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
-    input { width: 320px; padding: 8px; font-size: 16px; }
+    input[type="text"] { width: 320px; padding: 8px; font-size: 16px; }
     #matchesCount { margin-top: 10px; color: #000; font-size: 14px; }
     #suggestionsBox {
       position: absolute;
@@ -31,6 +31,7 @@
 <body>
 
   <h2>CSP - Module pour trouver les professions</h2>
+  <h4>Merci d'indiquer quelle est votre profession principale actuelle, la dernière profession exercée ou la profession à laquelle vous avez été formée</h2>
   <div id="matchesCount"></div>
   <div style="position: relative;">
     <input
@@ -41,7 +42,23 @@
     >
     <div id="suggestionsBox"></div>
   </div>
-  
+  <h4>Si la question ci-dessus ne s'applique pas à votre situation, merci de selectionner l'une des options suivante. </h2>
+  <form>
+  <label>
+    <input type="radio" name="status" value="en_formation">
+    En formation
+  </label><br>
+
+  <label>
+    <input type="radio" name="status" value="en_emploi">
+    Personne au foyer
+  </label><br>
+
+  <label>
+    <input type="radio" name="status" value="sans_emploi">
+    Au bénéfice du rente autre que la retraite
+  </label>
+</form>
   
 
   <script>
@@ -260,13 +277,13 @@
     // Auto-test after data loads
     setTimeout(() => {
       if (data.length > 0) {
-        console.log("Testing with 'enge'...");
-        searchBox.value = "enge";
+        console.log("Testing with 'ingé'...");
+        searchBox.value = "";
         search();
         
         setTimeout(() => {
-          console.log("Testing with 'engé'...");
-          searchBox.value = "engé";
+          console.log("Testing with 'ingé'...");
+          searchBox.value = "";
           search();
         }, 1000);
       }
